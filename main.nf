@@ -66,7 +66,7 @@ process tsv_to_psv {
 }
 
 process merge {
-    publishDir params.results, mode: 'copy', overwrite: true
+//    publishDir params.results, mode: 'copy', overwrite: true
 
     input:
     file '*.psv' from psv_files.toList()
@@ -81,7 +81,7 @@ process merge {
 }
 
 process test_mount {
-    publishDir params.results, mode: 'copy', overwrite: true
+//    publishDir params.results, mode: 'copy', overwrite: true
 
     input:
     file(a) from result
