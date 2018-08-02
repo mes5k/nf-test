@@ -1,8 +1,8 @@
 
 
-num_files = (int)(params.num_files)
+//num_files = (int)(params.num_files)
 Channel
-    .from( 1..num_files )
+    .from( 1..5 )
     .view()
     .set{
         file_create
