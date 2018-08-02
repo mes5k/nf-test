@@ -1,31 +1,97 @@
 
 
-Channel.from(1,2,3).set{ inch }
+num_files = (int)(params.num_files)
+Channel
+    .from( 1..num_files )
+    .view()
+    .set{
+        file_create
+    }
 
-process make_files {
-
+process create_files {
     input:
-    val(x) from inch
+    val(num) from file_create
 
     output:
-    set val(x), file("data_${x}.csv") into csv
+    file("${num}.txt") into text_files
 
     script:
     """
-    echo "${x},${x},${x}" > data_${x}.csv
+    sleep \$(((\$RANDOM % 10)+2))
+    echo "${num};${num};${num}" > ${num}.txt
     """
 }
 
-process to_tsv {
 
+process txt_to_csv {
     input:
-    set val(x), file(f) from csv
+    file txt from text_files
 
     output:
-    file("data_${x}.tsv") into outch
+    file "${txt}.csv" into csv_files
 
     script:
     """
-    sed 's/,/\\t/g' ${f} > data_${x}.tsv
+    sleep \$(((\$RANDOM % 10)+2))
+    sed 's/;/,/g' ${txt} > ${txt}.csv
+    """
+}
+
+process csv_to_tsv {
+    input:
+    file csv from csv_files
+
+    output:
+    file "${csv}.tsv" into tsv_files
+
+    script:
+    """
+    sleep \$(((\$RANDOM % 10)+2))
+    sed 's/,/\\t/g' ${csv} > ${csv}.tsv
+    """
+}
+
+process tsv_to_psv {
+    input:
+    file tsv from tsv_files
+
+    output:
+    file "${tsv}.psv" into psv_files
+
+    script:
+    """
+    sleep \$(((\$RANDOM % 10)+2))
+    sed 's/\\t/|/g' ${tsv} > ${tsv}.psv
+    """
+}
+
+process merge {
+    publishDir params.results, mode: 'copy', overwrite: true
+
+    input:
+    file '*.psv' from psv_files.toList()
+
+    output:
+    file "merge.out" into result
+
+    script:
+    """
+    cat *.psv > merge.out
+    """
+}
+
+process test_mount {
+    publishDir params.results, mode: 'copy', overwrite: true
+
+    input:
+    file(a) from result
+
+    output:
+    stdout into fin_res
+
+    script:
+    """
+    df -h
+    cp ${a} /mnt/efs/merge.out
     """
 }
